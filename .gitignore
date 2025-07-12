@@ -1,0 +1,68 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+.vs/
+
+# Compiled shaders
+*.spv
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# External dependencies (if using git submodules)
+external/nvrhi/
+external/FastNoiseLite/
+external/stb/
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+VoxelEngine
+
+# Debug files
+*.pdb
+*.ilk
+*.idb
+
+# Logs
+*.log
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates

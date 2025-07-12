@@ -3,9 +3,8 @@ build/
 cmake-build-*/
 out/
 .vs/
-
-# Compiled shaders
-*.spv
+bin/
+obj/
 
 # IDE files
 .vscode/
@@ -13,15 +12,22 @@ out/
 *.swp
 *.swo
 *~
+*.user
+*.userosscache
+*.sln.docstates
 
 # OS files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+desktop.ini
 
-# External dependencies (if using git submodules)
-external/nvrhi/
+# External dependencies
 external/FastNoiseLite/
 external/stb/
+external/glad/
+external/glfw/
+vcpkg_installed/
 
 # Compiled Object files
 *.slo
@@ -53,16 +59,75 @@ external/stb/
 *.out
 *.app
 VoxelEngine
+VoxelEngine.exe
 
 # Debug files
 *.pdb
 *.ilk
 *.idb
+*.dSYM/
 
 # Logs
 *.log
 
-# User-specific files
-*.user
-*.userosscache
-*.sln.docstates
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Package managers
+conan.lock
+conandata.yml
+conaninfo.txt
+
+# Backup files
+*.bak
+*.backup
+
+# Generated documentation
+docs/html/
+docs/latex/
+
+# Test results
+Testing/
+CTestTestfile.cmake
+
+# Profiling
+*.prof
+perf.data*
+
+# Valgrind
+vgcore.*
+*.memcheck
+
+# Coverage
+*.gcno
+*.gcda
+*.gcov
+coverage.info
+coverage/
+
+# Asset cache (if implemented)
+assets/cache/
+
+# Shader compilation cache
+shaders/*.spv
+shaders/cache/
+
+# World save files (if implemented)
+worlds/
+
+# Config files (user-specific)
+config.ini
+settings.json
+
+# Screenshots
+screenshots/

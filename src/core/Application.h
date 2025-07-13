@@ -1,13 +1,11 @@
 //
-// Created by mrsomfergo on 12.07.2025.
+// Created by mrsomfergo on 13.07.2025.
 //
 
 #pragma once
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_vulkan.h>
-#include <nvrhi/nvrhi.h>
-#include <nvrhi/vulkan.h>
+#include <glad/glad.h>
 #include <memory>
 #include <string>
 
@@ -27,38 +25,19 @@ public:
 
 private:
     bool InitializeSDL(const std::string& title);
-    bool InitializeVulkan();
-    bool CreateNVRHIDevice();
+    bool InitializeOpenGL();
     void ProcessEvents();
     void Update(float deltaTime);
     void Render();
+    void OnResize(uint32_t width, uint32_t height);
 
-    // SDL
+    // SDL & OpenGL
     SDL_Window* m_window = nullptr;
+    SDL_GLContext m_glContext = nullptr;
     uint32_t m_windowWidth;
     uint32_t m_windowHeight;
     bool m_running = false;
-
-    // Vulkan
-    VkInstance m_instance = VK_NULL_HANDLE;
-    VkSurfaceKHR m_surface = VK_NULL_HANDLE;
-    VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-    VkDevice m_device = VK_NULL_HANDLE;
-    VkQueue m_graphicsQueue = VK_NULL_HANDLE;
-    uint32_t m_graphicsQueueFamily = 0;
-
-    // NVRHI
-    nvrhi::vulkan::DeviceHandle m_nvrhiDevice;
-    nvrhi::CommandListHandle m_commandList;
-    nvrhi::DeviceHandle m_deviceHandle = nullptr;
-
-    // Swapchain
-    VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
-    std::vector<VkImage> m_swapchainImages;
-    std::vector<nvrhi::TextureHandle> m_swapchainTextures;
-    std::vector<nvrhi::FramebufferHandle> m_swapchainFramebuffers;
-    nvrhi::TextureHandle m_depthTexture;
-    uint32_t m_currentSwapchainIndex = 0;
+    bool m_mouseCaptured = false;
 
     // Components
     std::unique_ptr<Camera> m_camera;
@@ -69,4 +48,10 @@ private:
     // Timing
     uint64_t m_lastFrameTime;
     float m_deltaTime = 0.0f;
+    float m_frameTime = 0.0f;
+
+    // Performance counters
+    uint32_t m_frameCount = 0;
+    float m_fpsTimer = 0.0f;
+    float m_currentFPS = 0.0f;
 };

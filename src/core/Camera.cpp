@@ -1,14 +1,15 @@
 //
-// Created by mrsomfergo on 12.07.2025.
+// Created by mrsomfergo on 13.07.2025.
 //
 
 #include "Camera.h"
+#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 
 Camera::Camera(float fov, float aspectRatio, float nearPlane, float farPlane)
     : m_position(0.0f, 20.0f, 0.0f)
     , m_worldUp(0.0f, 1.0f, 0.0f)
-    , m_yaw(-90.0f)  // Смотрим вдоль -Z
+    , m_yaw(-90.0f)  // Look along -Z axis
     , m_pitch(0.0f)
     , m_fov(fov)
     , m_aspectRatio(aspectRatio)
@@ -37,7 +38,7 @@ void Camera::Rotate(float yaw, float pitch) {
     m_yaw += yaw;
     m_pitch += pitch;
 
-    // Ограничиваем pitch чтобы избежать переворота камеры
+    // Constrain pitch to avoid camera flip
     m_pitch = std::clamp(m_pitch, -89.0f, 89.0f);
 
     UpdateVectors();
@@ -55,22 +56,22 @@ void Camera::SetPosition(const glm::vec3& position) {
 }
 
 void Camera::UpdateVectors() {
-    // Вычисляем новый вектор forward
+    // Calculate new forward vector
     glm::vec3 forward;
     forward.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
     forward.y = sin(glm::radians(m_pitch));
     forward.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
     m_forward = glm::normalize(forward);
 
-    // Вычисляем векторы right и up
+    // Calculate right and up vectors
     m_right = glm::normalize(glm::cross(m_forward, m_worldUp));
     m_up = glm::normalize(glm::cross(m_right, m_forward));
 }
 
 void Camera::UpdateMatrices() {
-    // Обновляем матрицу вида
+    // Update view matrix
     m_viewMatrix = glm::lookAt(m_position, m_position + m_forward, m_up);
 
-    // Обновляем матрицу проекции
+    // Update projection matrix
     m_projMatrix = glm::perspective(glm::radians(m_fov), m_aspectRatio, m_nearPlane, m_farPlane);
 }

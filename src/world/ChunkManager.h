@@ -1,5 +1,5 @@
 //
-// Created by mrsomfergo on 12.07.2025.
+// Created by mrsomfergo on 13.07.2025.
 //
 
 #pragma once
@@ -13,8 +13,9 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include <atomic>
 
-// Hash function для glm::ivec3
+// Hash function for glm::ivec3
 struct ivec3Hash {
     std::size_t operator()(const glm::ivec3& v) const {
         return std::hash<int>()(v.x) ^
@@ -34,47 +35,72 @@ public:
 
     void Initialize();
     void Update(const glm::vec3& viewerPosition, float deltaTime);
-    void GenerateChunkMeshes(nvrhi::IDevice* device, nvrhi::ICommandList* commandList);
 
-    // Доступ к чанкам
+    // Chunk access
     Chunk* GetChunk(const glm::ivec3& position);
     std::vector<Chunk*> GetVisibleChunks() const;
 
-    // Доступ к блокам через мировые координаты
+    // Block access through world coordinates
     BlockType GetBlock(int x, int y, int z);
     void SetBlock(int x, int y, int z, BlockType type);
 
+    // Statistics
+    size_t GetLoadedChunkCount() const;
+    size_t GetTotalMemoryUsage() const;
+
+    // Generation status
+    bool IsGenerationComplete() const { return m_generationQueue.empty(); }
+    size_t GetGenerationQueueSize() const;
+
 private:
-    // Преобразование координат
+    // Coordinate conversion
     glm::ivec3 WorldToChunkPosition(const glm::vec3& worldPos) const;
     glm::ivec3 WorldToBlockPosition(int x, int y, int z) const;
     glm::ivec3 GetChunkPositionFromBlock(int x, int y, int z) const;
 
-    // Управление чанками
+    // Chunk management
     void LoadChunksAroundPosition(const glm::ivec3& centerChunk);
     void UnloadDistantChunks(const glm::ivec3& centerChunk);
     void LoadChunk(const glm::ivec3& position);
-    void UnloadChunk(const glm::ivec3& position);
     void UpdateChunkNeighbors(const glm::ivec3& position);
 
-    // Генерация в отдельном потоке
-    void GenerationThreadFunc();
+    // Mesh generation in main thread
+    void UpdateChunkMeshes();
 
-    // Хранилище чанков
+    // Generation thread
+    void GenerationThreadFunc();
+    void RequestChunkGeneration(const glm::ivec3& position);
+
+    // Chunk storage
     std::unordered_map<glm::ivec3, std::unique_ptr<Chunk>, ivec3Hash> m_chunks;
     mutable std::mutex m_chunksMutex;
 
-    // Генератор мира
+    // World generator
     std::unique_ptr<WorldGenerator> m_worldGenerator;
 
-    // Очередь для генерации
+    // Generation queue and thread
     std::queue<glm::ivec3> m_generationQueue;
-    std::mutex m_queueMutex;
-
-    // Поток генерации
+    std::queue<std::unique_ptr<Chunk>> m_generatedChunks;
+    mutable std::mutex m_queueMutex;
+    std::mutex m_generatedMutex;
     std::thread m_generationThread;
-    bool m_shouldStop = false;
+    std::atomic<bool> m_shouldStop{false};
 
-    // Текущая позиция наблюдателя в чанковых координатах
+    // Current viewer position
     glm::ivec3 m_currentChunkPosition;
+    glm::vec3 m_lastViewerPosition;
+
+    // Performance tracking
+    float m_updateTimer = 0.0f;
+    static constexpr float UPDATE_INTERVAL = 0.1f; // Update chunks every 100ms
+
+    // Chunk loading priority
+    struct ChunkLoadRequest {
+        glm::ivec3 position;
+        float distance;
+
+        bool operator<(const ChunkLoadRequest& other) const {
+            return distance > other.distance; // Min heap (closest first)
+        }
+    };
 };

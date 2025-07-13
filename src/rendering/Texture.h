@@ -1,34 +1,46 @@
 //
-// Created by mrsomfergo on 12.07.2025.
+// Created by mrsomfergo on 13.07.2025.
 //
 
 #pragma once
 
-#include <nvrhi/nvrhi.h>
+#include <glad/glad.h>
 #include <string>
 #include <vector>
 #include <memory>
 
 class Texture {
 public:
-    Texture(nvrhi::IDevice* device, nvrhi::ICommandList* commandList);
+    Texture();
     ~Texture();
 
-    bool LoadFromFile(const std::string& filepath, int width, int height);
-    bool LoadFromMemory(const uint8_t* data, uint32_t width, uint32_t height, uint32_t channels);
+    // Load texture from file
+    bool LoadFromFile(const std::string& filepath, int targetWidth = 0, int targetHeight = 0);
 
-    nvrhi::TextureHandle GetHandle() const { return m_texture; }
+    // Load texture from memory
+    bool LoadFromMemory(const uint8_t* data, uint32_t width, uint32_t height, uint32_t channels);
+    static std::vector<uint8_t> GenerateDefaultTexture(uint32_t width, uint32_t height);
+
+    // Create empty texture
+    bool Create(uint32_t width, uint32_t height, GLenum internalFormat = GL_RGBA8,
+                GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE);
+
+    // Getters
+    GLuint GetID() const { return m_textureID; }
     uint32_t GetWidth() const { return m_width; }
     uint32_t GetHeight() const { return m_height; }
+    uint32_t GetChannels() const { return m_channels; }
+
+    // Bind texture
+    void Bind(uint32_t slot = 0) const;
+    void Unbind() const;
 
 private:
-    void CreateTexture(const uint8_t* data);
-    std::vector<uint8_t> GenerateDefaultTexture(uint32_t width, uint32_t height);
+    void CreateFromData(const uint8_t* data);
+    std::vector<uint8_t> ResizeImage(const uint8_t* data, int oldWidth, int oldHeight,
+                                    int newWidth, int newHeight, int channels);
 
-    nvrhi::DeviceHandle m_device;
-    nvrhi::CommandListHandle m_commandList;
-    nvrhi::TextureHandle m_texture;
-
+    GLuint m_textureID = 0;
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     uint32_t m_channels = 4;
@@ -36,14 +48,17 @@ private:
 
 class TextureManager {
 public:
-    TextureManager(nvrhi::IDevice* device, nvrhi::ICommandList* commandList);
+    TextureManager();
     ~TextureManager();
 
-    nvrhi::TextureHandle CreateTextureArray(const std::vector<std::string>& filepaths,
-                                           uint32_t textureWidth, uint32_t textureHeight);
+    // Create texture array from multiple files
+    GLuint CreateTextureArray(const std::vector<std::string>& filepaths,
+                             uint32_t textureWidth, uint32_t textureHeight);
+
+    // Load single texture
+    std::unique_ptr<Texture> LoadTexture(const std::string& filepath,
+                                        int targetWidth = 0, int targetHeight = 0);
 
 private:
-    nvrhi::DeviceHandle m_device;
-    nvrhi::CommandListHandle m_commandList;
     std::vector<std::unique_ptr<Texture>> m_textures;
 };

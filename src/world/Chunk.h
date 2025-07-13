@@ -1,5 +1,5 @@
 //
-// Created by mrsomfergo on 12.07.2025.
+// Created by mrsomfergo on 13.07.2025.
 //
 
 #pragma once
@@ -9,7 +9,6 @@
 #include <vector>
 #include <array>
 #include <memory>
-#include <nvrhi/nvrhi.h>
 
 class Chunk {
 public:
@@ -27,49 +26,64 @@ public:
     Chunk(const glm::ivec3& position);
     ~Chunk();
 
-    // Доступ к блокам
+    // Block access using palette
     BlockType GetBlock(int x, int y, int z) const;
     void SetBlock(int x, int y, int z, BlockType type);
 
-    // Генерация меша
-    void GenerateMesh(nvrhi::IDevice* device, nvrhi::ICommandList* commandList);
+    // Mesh generation
+    void GenerateMesh();
+    void CreateOpenGLObjects(); // Create VAO/VBO/EBO (main thread only!)
     bool NeedsMeshUpdate() const { return m_meshDirty; }
+    void MarkDirty() { m_meshDirty = true; }
 
     // Getters
     const glm::ivec3& GetPosition() const { return m_position; }
     const glm::vec3& GetWorldPosition() const { return m_worldPosition; }
-    nvrhi::IBuffer* GetVertexBuffer() const { return m_vertexBuffer.Get(); }
-    nvrhi::IBuffer* GetIndexBuffer() const { return m_indexBuffer.Get(); }
+    uint32_t GetVAO() const { return m_vao; }
+    uint32_t GetVBO() const { return m_vbo; }
+    uint32_t GetEBO() const { return m_ebo; }
     uint32_t GetIndexCount() const { return m_indexCount; }
     bool IsEmpty() const { return m_isEmpty; }
 
-    // Соседи для оптимизации меша
+    // Neighbors for mesh optimization
     void SetNeighbor(int direction, Chunk* neighbor);
+    Chunk* GetNeighbor(int direction) const { return m_neighbors[direction]; }
+
+    // Palette info for debugging
+    size_t GetPaletteSize() const { return m_palette.size(); }
+    size_t GetMemoryUsage() const;
 
 private:
-    // Проверка границ
+    // Coordinate helpers
     bool IsValidPosition(int x, int y, int z) const;
     int GetBlockIndex(int x, int y, int z) const;
 
-    // Генерация геометрии для блока
+    // Palette management
+    uint8_t GetPaletteIndex(BlockType type);
+    void OptimizePalette();
+
+    // Mesh generation
     void AddBlockFaces(int x, int y, int z, BlockType type,
                       std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
     bool ShouldRenderFace(int x, int y, int z, int nx, int ny, int nz) const;
+    void UpdateOpenGLBuffers(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 
-    // Позиция чанка в чанковых координатах
+    // Position
     glm::ivec3 m_position;
     glm::vec3 m_worldPosition;
 
-    // Данные блоков
-    std::array<BlockType, TOTAL_BLOCKS> m_blocks;
+    // Palette system for memory efficiency
+    std::vector<BlockType> m_palette;           // Unique block types in this chunk
+    std::array<uint8_t, TOTAL_BLOCKS> m_blocks; // Indices into palette (1 byte per block)
 
-    // Меш
-    nvrhi::BufferHandle m_vertexBuffer;
-    nvrhi::BufferHandle m_indexBuffer;
+    // OpenGL buffers
+    uint32_t m_vao = 0;
+    uint32_t m_vbo = 0;
+    uint32_t m_ebo = 0;
     uint32_t m_indexCount = 0;
     bool m_meshDirty = true;
     bool m_isEmpty = true;
 
-    // Соседние чанки для оптимизации
+    // Neighbors for optimization (6 directions: -X, +X, -Y, +Y, -Z, +Z)
     std::array<Chunk*, 6> m_neighbors = { nullptr };
 };

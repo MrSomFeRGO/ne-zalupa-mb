@@ -1,39 +1,35 @@
 cmake_minimum_required(VERSION 3.20)
 project(VoxelEngine)
-set(NVRHI_BUILD_SHARED ON)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(NVRHI_WITH_VULKAN TRUE CACHE BOOL "" FORCE)
-# Поиск пакетов
-find_package(Vulkan REQUIRED)
+
+# Find packages
 find_package(SDL3 REQUIRED)
-
-# NVRHI
-add_subdirectory(external/nvrhi)
-
+find_package(OpenGL REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(glad CONFIG REQUIRED)
 # GLM
 include(FetchContent)
 
 FetchContent_Declare(
         glm
-        GIT_REPOSITORY	https://github.com/g-truc/glm.git
-        GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e #refs/tags/1.0.1
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG bf71a834948186f4097caa076cd2663c69a10e1e
 )
 
 FetchContent_MakeAvailable(glm)
+
+# GLAD
 #FetchContent_Declare(
-#        volk
-#        GIT_REPOSITORY https://github.com/zeux/volk.git
-#        GIT_TAG        master # или зафиксируй конкретную версию
+#        glad
+#        GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+#        GIT_TAG v0.1.36
 #)
 #
-#FetchContent_MakeAvailable(volk)
-# STB для загрузки изображений
-#add_subdirectory()
+#FetchContent_MakeAvailable(glad)
 
-file(GLOB NVRHI_UTILS_SRC CONFIGURE_DEPENDS
-        external/nvrhi/src/utils/*.cpp)
-# Исходные файлы
+# Source files
 set(SOURCES
         src/main.cpp
         src/core/Application.cpp
@@ -46,7 +42,6 @@ set(SOURCES
         src/world/Chunk.cpp
         src/world/ChunkManager.cpp
         src/world/WorldGenerator.cpp
-        ${NVRHI_UTILS_SRC}
 )
 
 set(HEADERS
@@ -56,6 +51,7 @@ set(HEADERS
         src/rendering/VoxelRenderer.h
         src/rendering/Shader.h
         src/rendering/Texture.h
+        src/rendering/OpenGLUtils.h
         src/world/Block.h
         src/world/Chunk.h
         src/world/ChunkManager.h
@@ -69,26 +65,23 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         external/FastNoiseLite
         external/stb
-#        ${volk_SOURCE_DIR}/volk
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-        Vulkan::Vulkan
-#        volk
         SDL3::SDL3
-        nvrhi
-#        nvrhi_vk
+        OpenGL::GL
+        glad::glad
         glm::glm
 )
 
-# Копирование шейдеров
+# Copy shaders
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/shaders
         $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders
 )
 
-# Копирование текстур
+# Copy textures
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/assets/textures

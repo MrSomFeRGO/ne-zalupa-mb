@@ -1,17 +1,19 @@
 //
-// Created by mrsomfergo on 12.07.2025.
+// Created by mrsomfergo on 13.07.2025.
 //
 
 #pragma once
 
-#include <nvrhi/nvrhi.h>
+#include <glad/glad.h>
+#include <glm/glm.hpp>
 #include <memory>
 #include <vector>
-#include <glm/glm.hpp>
+#include <string>
+
 #include "../core/Camera.h"
 #include "../world/ChunkManager.h"
-#include "Texture.h"
 #include "Shader.h"
+#include "Texture.h"
 
 struct UniformBufferData {
     glm::mat4 viewMatrix;
@@ -26,39 +28,41 @@ struct UniformBufferData {
 
 class VoxelRenderer {
 public:
-    VoxelRenderer(nvrhi::IDevice* device, nvrhi::ICommandList* commandList);
+    VoxelRenderer();
     ~VoxelRenderer();
 
     void Initialize(uint32_t width, uint32_t height, ChunkManager* chunkManager);
     void UpdateCamera(Camera* camera);
-    void Render(nvrhi::IFramebuffer* framebuffer);
+    void Render();
     void OnResize(uint32_t width, uint32_t height);
 
+    // Statistics
+    uint32_t GetRenderedChunks() const { return m_renderedChunks; }
+    uint32_t GetRenderedTriangles() const { return m_renderedTriangles; }
+
 private:
-    void CreatePipeline();
-    void CreatePipelineDeferred(nvrhi::IFramebuffer* framebuffer);
+    void CreateShaders();
     void CreateTextures();
     void CreateUniformBuffer();
     void UpdateUniformBuffer();
+    void SetupBlocks();
 
-    nvrhi::DeviceHandle m_device;
-    nvrhi::CommandListHandle m_commandList;
+    // Rendering
+    void RenderChunks(const std::vector<Chunk*>& chunks);
 
-    // Rendering pipeline
-    std::unique_ptr<Shader> m_vertexShader;
-    std::unique_ptr<Shader> m_pixelShader;
-    nvrhi::InputLayoutHandle m_inputLayout;
-    nvrhi::GraphicsPipelineHandle m_pipeline;
-    nvrhi::BindingLayoutHandle m_bindingLayout;
-    nvrhi::BindingSetHandle m_bindingSet;
+    // Frustum culling
+    bool IsChunkInFrustum(const Chunk* chunk) const;
+    void UpdateFrustumPlanes();
+
+    // Shaders
+    std::unique_ptr<Shader> m_shader;
 
     // Textures
     std::unique_ptr<TextureManager> m_textureManager;
-    nvrhi::TextureHandle m_textureArray;
-    nvrhi::SamplerHandle m_sampler;
+    GLuint m_textureArray = 0;
 
     // Uniform buffer
-    nvrhi::BufferHandle m_uniformBuffer;
+    GLuint m_uniformBuffer = 0;
     UniformBufferData m_uniformData;
 
     // References
@@ -66,6 +70,18 @@ private:
     ChunkManager* m_chunkManager = nullptr;
 
     // Viewport
-    uint32_t m_width;
-    uint32_t m_height;
+    uint32_t m_width = 1280;
+    uint32_t m_height = 720;
+
+    // Frustum culling
+    glm::vec4 m_frustumPlanes[6];
+
+    // Statistics
+    uint32_t m_renderedChunks = 0;
+    uint32_t m_renderedTriangles = 0;
+
+    // Rendering settings
+    bool m_wireframe = false;
+    bool m_frustumCulling = true;
+    float m_renderDistance = 128.0f;
 };
